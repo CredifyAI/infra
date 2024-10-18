@@ -12,7 +12,7 @@ resource "kubernetes_namespace" "frontend" {
 resource "kubernetes_namespace" "crdb" {
   metadata {
     labels = {
-      namespace = "crdb"
+      namespace       = "crdb"
       istio-injection = "disabled"
     }
 
