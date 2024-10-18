@@ -9,6 +9,18 @@ resource "kubernetes_namespace" "frontend" {
   depends_on = [azurerm_kubernetes_cluster.kubernetes]
 }
 
+resource "kubernetes_namespace" "crdb" {
+  metadata {
+    labels = {
+      namespace = "crdb"
+      istio-injection = "disabled"
+    }
+
+    name = "crdb"
+  }
+  depends_on = [azurerm_kubernetes_cluster.kubernetes]
+}
+
 resource "kubernetes_namespace" "istio" {
   metadata {
     labels = {
