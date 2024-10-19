@@ -8,7 +8,7 @@ resource "kubernetes_storage_class" "azure" {
   parameters = {
     storageaccounttype = "Standard_LRS"
     kind               = "Managed"
-    resourceGroup      = var.resource_group
+    resourceGroup      = var.node_resource_group
   }
 
   reclaim_policy      = "Retain"

@@ -2,16 +2,22 @@ data "azurerm_resource_group" "credifyai" {
   name = "credifyai-resources"
 }
 
+data "azurerm_resource_group" "credifyainode" {
+  name       = "credifyai-node-resources"
+  depends_on = [azurerm_kubernetes_cluster.kubernetes]
+}
+
 data "azurerm_client_config" "current" {
 }
 
 resource "azurerm_kubernetes_cluster" "kubernetes" {
-  name                   = "credify"
+  name                   = "credifyai"
   location               = data.azurerm_resource_group.credifyai.location
   resource_group_name    = data.azurerm_resource_group.credifyai.name
-  dns_prefix             = "credify"
+  dns_prefix             = "credifyai"
   kubernetes_version     = "1.30.0"
   disk_encryption_set_id = azurerm_disk_encryption_set.credifyai.id
+  node_resource_group    = var.node_resource_group
   default_node_pool {
     name                   = "default"
     node_count             = 1
@@ -51,12 +57,12 @@ resource "azurerm_kubernetes_cluster_node_pool" "internal" {
   }
 }
 
-resource "null_resource" "kube_config" {
-  provisioner "local-exec" {
-    command = <<EOT
-      rm -rf ~/.kube/config
-      az aks get-credentials --resource-group ${var.resource_group} --name ${var.cluster_name}
-    EOT
-  }
-  depends_on = [azurerm_kubernetes_cluster.kubernetes]
-}
+# resource "null_resource" "kube_config" {
+#   provisioner "local-exec" {
+#     command = <<EOT
+#       rm -rf ~/.kube/config
+#       az aks get-credentials --resource-group ${var.resource_group} --name ${var.cluster_name}
+#     EOT
+#   }
+#   depends_on = [azurerm_kubernetes_cluster.kubernetes]
+# }

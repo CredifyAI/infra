@@ -7,9 +7,13 @@ variable "region" {
 }
 
 variable "cluster_name" {
-  default = "credify"
+  default = "credifyai"
 }
 
 variable "resource_group" {
   default = "credifyai-resources"
+}
+
+variable "node_resource_group" {
+  default = "credifyai-node-resources"
 }
