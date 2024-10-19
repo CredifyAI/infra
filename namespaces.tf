@@ -6,7 +6,7 @@ resource "kubernetes_namespace" "frontend" {
 
     name = "frontend"
   }
-  depends_on = [azurerm_kubernetes_cluster.kubernetes]
+  depends_on = [azurerm_kubernetes_cluster.kubernetes, azurerm_kubernetes_cluster_node_pool.internal]
 }
 
 resource "kubernetes_namespace" "crdb" {
@@ -18,7 +18,7 @@ resource "kubernetes_namespace" "crdb" {
 
     name = "crdb"
   }
-  depends_on = [azurerm_kubernetes_cluster.kubernetes]
+  depends_on = [azurerm_kubernetes_cluster.kubernetes, azurerm_kubernetes_cluster_node_pool.internal]
 }
 
 resource "kubernetes_namespace" "istio" {
@@ -30,7 +30,7 @@ resource "kubernetes_namespace" "istio" {
 
     name = "istio-system"
   }
-  depends_on = [azurerm_kubernetes_cluster.kubernetes]
+  depends_on = [azurerm_kubernetes_cluster.kubernetes, azurerm_kubernetes_cluster_node_pool.internal]
 }
 
 resource "kubernetes_namespace" "istio_gw" {
@@ -42,7 +42,7 @@ resource "kubernetes_namespace" "istio_gw" {
 
     name = "istio-ingress"
   }
-  depends_on = [azurerm_kubernetes_cluster.kubernetes]
+  depends_on = [azurerm_kubernetes_cluster.kubernetes, azurerm_kubernetes_cluster_node_pool.internal]
 }
 
 resource "kubernetes_namespace" "monitoring" {
@@ -54,6 +54,7 @@ resource "kubernetes_namespace" "monitoring" {
 
     name = "monitoring"
   }
+  depends_on = [azurerm_kubernetes_cluster.kubernetes, azurerm_kubernetes_cluster_node_pool.internal]
 }
 
 resource "kubernetes_namespace" "logging" {
@@ -65,7 +66,7 @@ resource "kubernetes_namespace" "logging" {
 
     name = "logging"
   }
-  depends_on = [azurerm_kubernetes_cluster.kubernetes]
+  depends_on = [azurerm_kubernetes_cluster.kubernetes, azurerm_kubernetes_cluster_node_pool.internal]
 }
 
 resource "kubernetes_namespace" "argocd" {
@@ -77,5 +78,5 @@ resource "kubernetes_namespace" "argocd" {
 
     name = "argocd"
   }
-  depends_on = [azurerm_kubernetes_cluster.kubernetes]
+  depends_on = [azurerm_kubernetes_cluster.kubernetes, azurerm_kubernetes_cluster_node_pool.internal]
 }
