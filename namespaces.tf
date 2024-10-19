@@ -18,7 +18,7 @@ resource "kubernetes_namespace" "crdb" {
 
     name = "crdb"
   }
- depends_on = [azurerm_kubernetes_cluster.kubernetes, azurerm_kubernetes_cluster_node_pool.internal]
+  depends_on = [azurerm_kubernetes_cluster.kubernetes, azurerm_kubernetes_cluster_node_pool.internal]
 }
 
 resource "kubernetes_namespace" "istio" {

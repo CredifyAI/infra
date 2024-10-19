@@ -6,13 +6,13 @@ resource "kubernetes_storage_class" "azure" {
   storage_provisioner = "kubernetes.io/azure-disk"
 
   parameters = {
-    storageaccounttype = "Standard_LRS" 
+    storageaccounttype = "Standard_LRS"
     kind               = "Managed"
     resourceGroup      = var.resource_group
   }
 
-  reclaim_policy       = "Retain"
-  volume_binding_mode  = "Immediate"
+  reclaim_policy      = "Retain"
+  volume_binding_mode = "Immediate"
 }
 
 resource "null_resource" "crdb_install" {
