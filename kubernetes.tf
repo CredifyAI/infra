@@ -3,8 +3,8 @@ data "azurerm_resource_group" "credifyai" {
 }
 
 data "azurerm_resource_group" "credifyainode" {
-  name = "credifyai-node-resources"
-  depends_on = [ azurerm_kubernetes_cluster.kubernetes ]
+  name       = "credifyai-node-resources"
+  depends_on = [azurerm_kubernetes_cluster.kubernetes]
 }
 
 data "azurerm_client_config" "current" {
@@ -17,7 +17,7 @@ resource "azurerm_kubernetes_cluster" "kubernetes" {
   dns_prefix             = "credifyai"
   kubernetes_version     = "1.30.0"
   disk_encryption_set_id = azurerm_disk_encryption_set.credifyai.id
-  node_resource_group = var.node_resource_group
+  node_resource_group    = var.node_resource_group
   default_node_pool {
     name                   = "default"
     node_count             = 1
