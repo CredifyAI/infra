@@ -80,3 +80,15 @@ resource "kubernetes_namespace" "argocd" {
   }
   depends_on = [azurerm_kubernetes_cluster.kubernetes, azurerm_kubernetes_cluster_node_pool.internal]
 }
+
+resource "kubernetes_namespace" "vault" {
+  metadata {
+    labels = {
+      namespace       = "vault"
+      istio-injection = "disabled"
+    }
+
+    name = "vault"
+  }
+  depends_on = [azurerm_kubernetes_cluster.kubernetes, azurerm_kubernetes_cluster_node_pool.internal]
+}
