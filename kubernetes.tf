@@ -25,6 +25,11 @@ resource "azurerm_kubernetes_cluster" "kubernetes" {
     node_public_ip_enabled = false
     vnet_subnet_id         = azurerm_subnet.nodes.id
     pod_subnet_id          = azurerm_subnet.pods.id
+    upgrade_settings {
+    drain_timeout_in_minutes = 0
+    max_surge = "10%"
+    node_soak_duration_in_minutes = 0
+  }
   }
   network_profile {
     network_plugin     = "azure"
@@ -52,17 +57,22 @@ resource "azurerm_kubernetes_cluster_node_pool" "internal" {
   max_count               = 10
   min_count               = 1
   pod_subnet_id           = azurerm_subnet.pods.id
+  node_public_ip_enabled = false
+  fips_enabled = false
+  node_taints = []
+  vnet_subnet_id = azurerm_subnet.nodes.id
+  zones = []
   tags = {
     project = "credifyai"
   }
 }
 
-# resource "null_resource" "kube_config" {
-#   provisioner "local-exec" {
-#     command = <<EOT
-#       rm -rf ~/.kube/config
-#       az aks get-credentials --resource-group ${var.resource_group} --name ${var.cluster_name}
-#     EOT
-#   }
-#   depends_on = [azurerm_kubernetes_cluster.kubernetes]
-# }
+resource "null_resource" "kube_config" {
+  provisioner "local-exec" {
+    command = <<EOT
+      rm -rf ~/.kube/config
+      az aks get-credentials --resource-group ${var.resource_group} --name ${var.cluster_name}
+    EOT
+  }
+  depends_on = [azurerm_kubernetes_cluster.kubernetes]
+}

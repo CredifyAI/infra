@@ -5,7 +5,7 @@ resource "azurerm_key_vault" "credifyai" {
   enabled_for_disk_encryption = true
   tenant_id                   = data.azurerm_client_config.current.tenant_id
   soft_delete_retention_days  = 7
-  purge_protection_enabled    = false
+  purge_protection_enabled    = true
 
   sku_name = "standard"
 
@@ -75,6 +75,29 @@ resource "azurerm_key_vault_access_policy" "credifyai" {
   ]
 }
 
+resource "azurerm_key_vault_access_policy" "aks" {
+  key_vault_id = azurerm_key_vault.credifyai.id
+
+  tenant_id = azurerm_kubernetes_cluster.kubernetes.identity[0].tenant_id
+  object_id = azurerm_kubernetes_cluster.kubernetes.identity[0].principal_id
+
+  key_permissions = [
+    "Create",
+    "Delete",
+    "Get",
+    "Encrypt",
+    "WrapKey",
+    "UnwrapKey",
+    "Purge",
+    "Recover",
+    "Update",
+    "List",
+    "Decrypt",
+    "Sign",
+  ]
+}
+
+
 resource "azurerm_disk_encryption_set" "credifyai" {
   name                = "des"
   resource_group_name = data.azurerm_resource_group.credifyai.name
@@ -93,8 +116,25 @@ resource "azurerm_role_assignment" "credifyai" {
   principal_id         = azurerm_disk_encryption_set.credifyai.identity[0].principal_id
 }
 
+# resource "azurerm_role_assignment" "des" {
+#   principal_id   = azurerm_disk_encryption_set.credifyai.identity[0].principal_id
+#   role_definition_name = "Key Vault Crypto Service Encryption User"
+#   scope          = azurerm_key_vault.credifyai.id
+# }
+
+data "azuread_service_principal" "aks" {
+  display_name                = var.cluster_name
+  depends_on = [ azurerm_kubernetes_cluster.kubernetes ]
+}
+
 resource "azurerm_role_assignment" "credifyainode" {
   scope                = azurerm_disk_encryption_set.credifyai.id
+  role_definition_name = "Reader"
+  principal_id         = data.azuread_service_principal.aks.object_id
+}
+
+resource "azurerm_role_assignment" "node" {
+  scope                = data.azurerm_resource_group.credifyainode.id
   role_definition_name = "Key Vault Crypto Service Encryption User"
   principal_id         = azurerm_disk_encryption_set.credifyai.identity[0].principal_id
 }
