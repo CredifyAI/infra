@@ -19,15 +19,15 @@ resource "kubernetes_service_account" "crdb_sa" {
       "meta.helm.sh/release-namespace" = "crdb"
     }
   }
-  depends_on = [ kubernetes_namespace.crdb ]
+  depends_on = [kubernetes_namespace.crdb]
 }
 
 data "kubernetes_service" "vault" {
   metadata {
-    name = "vault-server"
+    name      = "vault-server"
     namespace = kubernetes_namespace.vault.metadata[0].name
   }
-  depends_on = [ null_resource.vault_unseal ]
+  depends_on = [null_resource.vault_unseal]
 }
 
 data "kubernetes_secret" "vault_token" {
@@ -35,7 +35,7 @@ data "kubernetes_secret" "vault_token" {
     name      = "vault-root-token"
     namespace = kubernetes_namespace.vault.metadata[0].name
   }
-  depends_on = [ null_resource.vault_unseal ]
+  depends_on = [null_resource.vault_unseal]
 }
 resource "null_resource" "vault_init" {
   provisioner "local-exec" {
@@ -48,7 +48,7 @@ resource "null_resource" "vault_init" {
         done
     EOT
   }
-  depends_on = [ helm_release.vault ]
+  depends_on = [helm_release.vault]
 }
 
 resource "null_resource" "vault_unseal" {
@@ -65,52 +65,52 @@ resource "null_resource" "vault_unseal" {
 }
 
 resource "vault_auth_backend" "kubernetes" {
-  type = "kubernetes"
-  depends_on = [ null_resource.vault_unseal ]
+  type       = "kubernetes"
+  depends_on = [null_resource.vault_unseal]
 }
 
 resource "vault_kubernetes_auth_backend_config" "kubernetes" {
-  backend            = vault_auth_backend.kubernetes.path
+  backend         = vault_auth_backend.kubernetes.path
   kubernetes_host = "http://vault-server.vault.svc:8200"
   # kubernetes_host    = azurerm_kubernetes_cluster.kubernetes.kube_config.0.host
   # kubernetes_ca_cert = base64decode(azurerm_kubernetes_cluster.kubernetes.kube_config.0.cluster_ca_certificate)
   # token_reviewer_jwt = data.kubernetes_secret.vault_token.data["root_token"]
   # issuer                 = azurerm_kubernetes_cluster.kubernetes.kube_config.0.host
   disable_iss_validation = "true"
-  depends_on = [ vault_auth_backend.kubernetes ]
+  depends_on             = [vault_auth_backend.kubernetes]
 }
 
 resource "vault_mount" "crdb" {
-  path = "crdb"
-  type = "database"
-  depends_on = [ vault_kubernetes_auth_backend_config.kubernetes ]
+  path       = "crdb"
+  type       = "database"
+  depends_on = [vault_kubernetes_auth_backend_config.kubernetes]
 }
 
 resource "vault_policy" "crdb_policy" {
   name = "crdb-policy"
 
-  policy = <<EOT
+  policy     = <<EOT
 path "*" {
   capabilities = ["read", "create", "update", "patch", "delete", "list"]
 }
 EOT
-depends_on = [ vault_mount.crdb ]
+  depends_on = [vault_mount.crdb]
 }
 
 resource "vault_kubernetes_auth_backend_role" "crdb_role" {
-  backend     = vault_auth_backend.kubernetes.path
-  role_name   = "crdb-role"
-  
+  backend   = vault_auth_backend.kubernetes.path
+  role_name = "crdb-role"
+
   bound_service_account_names      = ["credifyai-crdb"]
   bound_service_account_namespaces = ["crdb"]
   # audience = azurerm_kubernetes_cluster.kubernetes.kube_config.0.host
-  token_ttl         = 3600
-  token_policies    = ["crdb-policy"] 
-  depends_on = [ vault_policy.crdb_policy ]
+  token_ttl      = 3600
+  token_policies = ["crdb-policy"]
+  depends_on     = [vault_policy.crdb_policy]
 }
 
 resource "time_sleep" "sixty" {
-  depends_on = [ null_resource.crdb_install]
+  depends_on = [null_resource.crdb_install]
 
   create_duration = "60s"
 }
@@ -123,18 +123,18 @@ resource "vault_database_secret_backend_connection" "crdb" {
   postgresql {
     connection_url = "postgresql://root@cockroachdb-public.crdb:26257/credifyai?sslmode=disable"
   }
-  depends_on = [ time_sleep.sixty ]
+  depends_on = [time_sleep.sixty]
 }
 
 resource "vault_database_secret_backend_role" "crdb_role" {
-  backend         = vault_mount.crdb.path
-  name            = "crdb-role"
-  db_name         = vault_database_secret_backend_connection.crdb.name
+  backend = vault_mount.crdb.path
+  name    = "crdb-role"
+  db_name = vault_database_secret_backend_connection.crdb.name
   creation_statements = [
     "CREATE USER '{{name}}' WITH PASSWORD '{{password}}';",
     "GRANT ALL PRIVILEGES ON DATABASE defaultdb TO '{{name}}';"
   ]
-  default_ttl     = 3600
-  max_ttl         = 14400
-  depends_on = [ vault_database_secret_backend_connection.crdb ]
+  default_ttl = 3600
+  max_ttl     = 14400
+  depends_on  = [vault_database_secret_backend_connection.crdb]
 }

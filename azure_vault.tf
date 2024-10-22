@@ -123,8 +123,8 @@ resource "azurerm_role_assignment" "credifyai" {
 # }
 
 data "azuread_service_principal" "aks" {
-  display_name                = var.cluster_name
-  depends_on = [ azurerm_kubernetes_cluster.kubernetes ]
+  display_name = var.cluster_name
+  depends_on   = [azurerm_kubernetes_cluster.kubernetes]
 }
 
 resource "azurerm_role_assignment" "credifyainode" {

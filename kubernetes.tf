@@ -26,10 +26,10 @@ resource "azurerm_kubernetes_cluster" "kubernetes" {
     vnet_subnet_id         = azurerm_subnet.nodes.id
     pod_subnet_id          = azurerm_subnet.pods.id
     upgrade_settings {
-    drain_timeout_in_minutes = 0
-    max_surge = "10%"
-    node_soak_duration_in_minutes = 0
-  }
+      drain_timeout_in_minutes      = 0
+      max_surge                     = "10%"
+      node_soak_duration_in_minutes = 0
+    }
   }
   network_profile {
     network_plugin     = "azure"
@@ -57,11 +57,11 @@ resource "azurerm_kubernetes_cluster_node_pool" "internal" {
   max_count               = 10
   min_count               = 1
   pod_subnet_id           = azurerm_subnet.pods.id
-  node_public_ip_enabled = false
-  fips_enabled = false
-  node_taints = []
-  vnet_subnet_id = azurerm_subnet.nodes.id
-  zones = []
+  node_public_ip_enabled  = false
+  fips_enabled            = false
+  node_taints             = []
+  vnet_subnet_id          = azurerm_subnet.nodes.id
+  zones                   = []
   tags = {
     project = "credifyai"
   }

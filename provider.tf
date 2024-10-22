@@ -5,7 +5,7 @@ terraform {
       version = "4.5.0"
     }
     vault = {
-      source = "hashicorp/vault"
+      source  = "hashicorp/vault"
       version = "4.4.0"
     }
   }
@@ -35,5 +35,5 @@ provider "helm" {
 
 provider "vault" {
   address = "http://${data.kubernetes_service.vault.status[0].load_balancer[0].ingress[0].ip}:8200"
-  token = data.kubernetes_secret.vault_token.data["root_token"]
+  token   = data.kubernetes_secret.vault_token.data["root_token"]
 }
