@@ -68,7 +68,7 @@ resource "vault_kubernetes_auth_backend_config" "kubernetes" {
 resource "vault_mount" "crdb" {
   path       = "crdb"
   type       = "database"
-  depends_on = [time_sleep.thirty, vault_kubernetes_auth_backend_config.kubernetes]
+  depends_on = [vault_kubernetes_auth_backend_config.kubernetes]
 }
 
 resource "vault_policy" "crdb_policy" {
