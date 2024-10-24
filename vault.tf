@@ -82,22 +82,21 @@ EOT
   depends_on = [vault_database_secret_backend_role.crdb_role]
 }
 
+locals {
+  trimmed_host = replace(azurerm_kubernetes_cluster.kubernetes.kube_config.0.host, ":443", "")
+  depends_on   = [vault_policy.crdb_policy]
+}
+
 resource "vault_kubernetes_auth_backend_role" "crdb_role" {
   backend   = vault_auth_backend.kubernetes.path
   role_name = "crdb-role"
 
   bound_service_account_names      = ["credifyai-crdb"]
   bound_service_account_namespaces = ["crdb"]
-  audience                         = azurerm_kubernetes_cluster.kubernetes.kube_config.0.host
+  audience                         = local.trimmed_host
   token_ttl                        = 3600
   token_policies                   = ["crdb-policy"]
-  depends_on                       = [vault_policy.crdb_policy]
-}
-
-resource "time_sleep" "sixty" {
-  depends_on = [vault_kubernetes_auth_backend_role.crdb_role]
-
-  create_duration = "60s"
+  depends_on                       = [local.trimmed_host]
 }
 
 resource "vault_database_secret_backend_connection" "crdb" {

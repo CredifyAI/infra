@@ -51,7 +51,7 @@ resource "helm_release" "crdb_final" {
   name       = "cockroachdb"
   repository = "https://credifyai.github.io/helm-cockroachdb"
   chart      = "cockroachdb"
-  version    = "13.0.17"
+  version    = "13.0.20"
   namespace  = kubernetes_namespace.crdb.metadata[0].name
   values = [<<-EOF
     init:
@@ -59,6 +59,8 @@ resource "helm_release" "crdb_final" {
         users: 
         - name: credifyai
           password: admin
+        databases:
+        - name: credifyai
   EOF
   ]
   depends_on = [kubernetes_service_account.crdb_sa]
@@ -76,7 +78,7 @@ resource "null_resource" "crdb-init" {
 resource "null_resource" "crdb-rotate" {
   provisioner "local-exec" {
     command = <<EOT
-        kubectl exec -n vault vault-server-0 -- vault write -force crdb/rotate-root/crdb
+      kubectl exec -n vault vault-server-0 -- /bin/sh -c 'export VAULT_ADDR="http://${data.kubernetes_service.vault.status[0].load_balancer[0].ingress[0].ip}:8200"; export VAULT_TOKEN="${data.kubernetes_secret.vault_token.data["root_token"]}"; vault write -force crdb/rotate-root/crdb'
     EOT
   }
   depends_on = [vault_database_secret_backend_role.crdb_role]
