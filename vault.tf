@@ -4,22 +4,7 @@ resource "helm_release" "vault" {
   chart      = "vault"
   namespace  = kubernetes_namespace.vault.metadata[0].name
   values     = [file("./vault-config.yaml")]
-  depends_on = [kubernetes_namespace.vault, kubernetes_service_account.crdb_sa]
-}
-
-resource "kubernetes_service_account" "crdb_sa" {
-  metadata {
-    name      = "credifyai-crdb"
-    namespace = "crdb"
-    labels = {
-      "app.kubernetes.io/managed-by" = "Helm"
-    }
-    annotations = {
-      "meta.helm.sh/release-name"      = "cockroachdb"
-      "meta.helm.sh/release-namespace" = "crdb"
-    }
-  }
-  depends_on = [kubernetes_namespace.crdb]
+  depends_on = [kubernetes_namespace.vault]
 }
 
 data "kubernetes_service" "vault" {
@@ -70,12 +55,12 @@ resource "vault_auth_backend" "kubernetes" {
 }
 
 resource "vault_kubernetes_auth_backend_config" "kubernetes" {
-  backend         = vault_auth_backend.kubernetes.path
-  kubernetes_host = "http://vault-server.vault.svc:8200"
-  # kubernetes_host    = azurerm_kubernetes_cluster.kubernetes.kube_config.0.host
+  backend = vault_auth_backend.kubernetes.path
+  # kubernetes_host = "http://vault-server.vault.svc:8200"
+  kubernetes_host = azurerm_kubernetes_cluster.kubernetes.kube_config.0.host
   # kubernetes_ca_cert = base64decode(azurerm_kubernetes_cluster.kubernetes.kube_config.0.cluster_ca_certificate)
   # token_reviewer_jwt = data.kubernetes_secret.vault_token.data["root_token"]
-  # issuer                 = azurerm_kubernetes_cluster.kubernetes.kube_config.0.host
+  issuer                 = azurerm_kubernetes_cluster.kubernetes.kube_config.0.host
   disable_iss_validation = "true"
   depends_on             = [vault_auth_backend.kubernetes]
 }
@@ -94,7 +79,7 @@ path "*" {
   capabilities = ["read", "create", "update", "patch", "delete", "list"]
 }
 EOT
-  depends_on = [vault_mount.crdb]
+  depends_on = [vault_database_secret_backend_role.crdb_role]
 }
 
 resource "vault_kubernetes_auth_backend_role" "crdb_role" {
@@ -103,27 +88,29 @@ resource "vault_kubernetes_auth_backend_role" "crdb_role" {
 
   bound_service_account_names      = ["credifyai-crdb"]
   bound_service_account_namespaces = ["crdb"]
-  # audience = azurerm_kubernetes_cluster.kubernetes.kube_config.0.host
-  token_ttl      = 3600
-  token_policies = ["crdb-policy"]
-  depends_on     = [vault_policy.crdb_policy]
+  audience                         = azurerm_kubernetes_cluster.kubernetes.kube_config.0.host
+  token_ttl                        = 3600
+  token_policies                   = ["crdb-policy"]
+  depends_on                       = [vault_policy.crdb_policy]
 }
 
 resource "time_sleep" "sixty" {
-  depends_on = [null_resource.crdb_install]
+  depends_on = [vault_kubernetes_auth_backend_role.crdb_role]
 
   create_duration = "60s"
 }
 
 resource "vault_database_secret_backend_connection" "crdb" {
   backend       = vault_mount.crdb.path
-  name          = "cockroachdb"
+  name          = "crdb"
   allowed_roles = ["crdb-role"]
 
   postgresql {
-    connection_url = "postgresql://root@cockroachdb-public.crdb:26257/credifyai?sslmode=disable"
+    connection_url = "postgresql://{{username}}:{{password}}@cockroachdb-public.crdb.svc:26257/credifyai?sslmode=require"
+    username       = "credifyai"
+    password       = "admin"
   }
-  depends_on = [time_sleep.sixty]
+  depends_on = [vault_mount.crdb]
 }
 
 resource "vault_database_secret_backend_role" "crdb_role" {
@@ -131,8 +118,8 @@ resource "vault_database_secret_backend_role" "crdb_role" {
   name    = "crdb-role"
   db_name = vault_database_secret_backend_connection.crdb.name
   creation_statements = [
-    "CREATE USER '{{name}}' WITH PASSWORD '{{password}}';",
-    "GRANT ALL PRIVILEGES ON DATABASE defaultdb TO '{{name}}';"
+    "CREATE ROLE \"{{name}}\" WITH LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}';",
+    "GRANT ALL PRIVILEGES ON DATABASE credifyai TO \"{{name}}\";"
   ]
   default_ttl = 3600
   max_ttl     = 14400
