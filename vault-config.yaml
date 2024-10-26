@@ -19,7 +19,6 @@ server:
       address = "[::]:{{ .Values.server.containerPorts.http }}"
       cluster_address = "[::]:{{ .Values.server.containerPorts.internal }}"
       {{- if .Values.server.metrics.enabled }}
-      # Enable unauthenticated metrics access (necessary for Prometheus Operator)
       telemetry {
         unauthenticated_metrics_access = "true"
       }
@@ -28,5 +27,4 @@ server:
     storage "raft" {
       path = "{{ .Values.server.persistence.mountPath }}"
     }
-    log_level = "debug"
     service_registration "kubernetes" {}

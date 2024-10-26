@@ -69,6 +69,18 @@ resource "kubernetes_namespace" "logging" {
   depends_on = [azurerm_kubernetes_cluster.kubernetes, azurerm_kubernetes_cluster_node_pool.internal]
 }
 
+resource "kubernetes_namespace" "backend" {
+  metadata {
+    labels = {
+      namespace       = "backend"
+      istio-injection = "enabled"
+    }
+
+    name = "backend"
+  }
+  depends_on = [azurerm_kubernetes_cluster.kubernetes, azurerm_kubernetes_cluster_node_pool.internal]
+}
+
 resource "kubernetes_namespace" "argocd" {
   metadata {
     labels = {
