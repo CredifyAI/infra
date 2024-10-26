@@ -55,8 +55,8 @@ resource "vault_auth_backend" "kubernetes" {
 }
 
 resource "vault_kubernetes_auth_backend_config" "kubernetes" {
-  backend = vault_auth_backend.kubernetes.path
-  kubernetes_host = azurerm_kubernetes_cluster.kubernetes.kube_config.0.host
+  backend                = vault_auth_backend.kubernetes.path
+  kubernetes_host        = azurerm_kubernetes_cluster.kubernetes.kube_config.0.host
   issuer                 = azurerm_kubernetes_cluster.kubernetes.kube_config.0.host
   disable_iss_validation = "true"
   depends_on             = [vault_auth_backend.kubernetes]
