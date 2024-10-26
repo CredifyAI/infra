@@ -55,11 +55,8 @@ resource "vault_auth_backend" "kubernetes" {
 }
 
 resource "vault_kubernetes_auth_backend_config" "kubernetes" {
-  backend = vault_auth_backend.kubernetes.path
-  # kubernetes_host = "http://vault-server.vault.svc:8200"
-  kubernetes_host = azurerm_kubernetes_cluster.kubernetes.kube_config.0.host
-  # kubernetes_ca_cert = base64decode(azurerm_kubernetes_cluster.kubernetes.kube_config.0.cluster_ca_certificate)
-  # token_reviewer_jwt = data.kubernetes_secret.vault_token.data["root_token"]
+  backend                = vault_auth_backend.kubernetes.path
+  kubernetes_host        = azurerm_kubernetes_cluster.kubernetes.kube_config.0.host
   issuer                 = azurerm_kubernetes_cluster.kubernetes.kube_config.0.host
   disable_iss_validation = "true"
   depends_on             = [vault_auth_backend.kubernetes]

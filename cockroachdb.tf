@@ -13,40 +13,6 @@ resource "kubernetes_service_account" "crdb_sa" {
   depends_on = [kubernetes_namespace.crdb]
 }
 
-# resource "helm_release" "crdb_init" {
-#   name       = "cockroachdb"
-#   repository = "https://credifyai.github.io/helm-cockroachdb"
-#   chart      = "cockroachdb"
-#   version    = "13.0.19" 
-#   namespace = kubernetes_namespace.crdb.metadata[0].name
-#   values = [<<-EOF
-#     statefulset:
-#       replicas: 1  
-#     init:
-#       provisioning:
-#         users: 
-#         - name: credifyai
-#           password: admin
-#   EOF
-#   ]
-#   depends_on = [ kubernetes_service_account.crdb_sa ]
-# } 
-
-# resource "time_sleep" "thirty" {
-
-#   create_duration = "30s"
-# }
-
-# resource "null_resource" "crdb_cleanup" {
-#  provisioner "local-exec" {
-#     command = <<-EOF
-#       helm uninstall -n crdb cockroachdb
-#       sleep 120
-#     EOF
-#   }
-#   depends_on = [ vault_database_secret_backend_connection.crdb ]
-# }
-
 resource "helm_release" "crdb_final" {
   name       = "cockroachdb"
   repository = "https://credifyai.github.io/helm-cockroachdb"
